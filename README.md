@@ -774,6 +774,15 @@ To pass a Stream to this method, construct a StreamPart object like so:
 someApiInstance.UploadPhoto(id, new StreamPart(myPhotoStream, "photo.jpg", "image/jpeg"));
 ```
 
+**Note** 
+
+All parameters will be converted to stream parts except those have one of the following attributes or type:
+- HeaderCollectionAttribute
+- HeaderAttribute
+- AuthorizeAttribute
+- **NotMultipartAttribute**
+- System.Threading.CancellationToken type
+
 ### Retrieving the response
 
 **Unlike Refit**
