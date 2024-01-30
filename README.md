@@ -1,4 +1,4 @@
-## HttpClientFiller - Refit that supports native ahead-of-time (AOT) compilation.
+## HttpClientFiller - Refit like but supports native ahead-of-time (AOT) compilation.
 
 The HttpClientFiller usage is mostly identical from Refit. 
 
@@ -45,6 +45,12 @@ public AbcController(IGitHubApi gitHubApi)
 - Since explicit implementation, it supports registering via HttpClientFactory by default. No need for additional helper method.
 
 ## Changelog
+
+### [0.1.3] - 2024-01-29
+
+#### Add
+- More Analyzer warning rules
+- Fix bug
 
 ### [0.1.2] - 2024-01-25
 
@@ -306,7 +312,7 @@ type of the parameter:
 Behind the scene is `HttpClient` send http request which is streaming without buffering by default.
 
 **Unlike Refit**
-- HttpClientFiller don't control streaming buffer behavior. But you can control it in the Stream object which is passed to method. 
+- HttpClientFiller don't control streaming buffer behavior. But you can control buffer/no buffer in the Stream object which is passed to method. 
 
 #### HttpCompleteOption
 
@@ -409,7 +415,9 @@ await api.Collect(data);
 ```
 
 Or you can just pass any object and all _public, readable_ properties will
-be serialized as form fields in the request. ~~This approach allows you to alias
+be serialized as form fields in the request. 
+
+~~This approach allows you to alias
 property names using `[AliasAs("whatever")]` which can help if the API has
 cryptic field names:~~
 
@@ -576,10 +584,9 @@ public void ConfigureServices(IServiceCollection services)
     //this will add our refit api implementation with an HttpClient
     //that is configured to add auth headers to all requests
 
-    //note: AddRefitClient<T> requires a reference to Refit.HttpClientFactory
     //note: the order of delegating handlers is important and they run in the order they are added!
 
-    builder.Services.AddHttpClient<IGitHubApi, GitHubApi>(client =>
+    builder.Services.AddHttpClient<IGitHubApi, IGitHubApi>(client =>
     {
         client.BaseAddress = new Uri("https://api.github.com");
         return new GitHubApi(client, new System.Text.Json.JsonSerializerOptions()
@@ -754,7 +761,7 @@ Name of the field in the multipart data priority precedence:
 * ~~[AliasAs] attribute  (optional) that decorate the streamPart parameter in the method signature (see below); static, defined in code.~~
 * MultipartItem parameter name (default) as defined in the method signature; static, defined in code.
 
-A custom boundary can be specified with an optional string parameter to the `Multipart` attribute. If left empty, this defaults to `----MyGreatBoundary`.
+A custom boundary can be specified with an optional string parameter to the `Multipart` attribute. If left empty, this defaults to `----HttpClientFillerMultipartBoundary`.
 
 To specify the file name and content type for byte array (`byte[]`), `Stream` and `FileInfo` parameters, use of a wrapper class is required.
 The wrapper classes for these types are `ByteArrayPart`, `StreamPart` and `FileInfoPart`.
@@ -764,7 +771,7 @@ public interface ISomeApi
 {
     [Multipart]
     [Post("/users/{id}/photo")]
-    Task UploadPhoto(int id, StreamPart stream);
+    Task UploadPhoto([NotMultipart]int id, StreamPart stream);
 }
 ```
 
@@ -782,6 +789,8 @@ All parameters will be converted to stream parts except those have one of the fo
 - AuthorizeAttribute
 - **NotMultipartAttribute**
 - System.Threading.CancellationToken type
+
+The convention is no [Body] attribute, instead use [NotMultipartAttribute] to skip the param to go to multi-part.
 
 ### Retrieving the response
 
@@ -1078,10 +1087,8 @@ Since we are concreate implementation. No need for extra helper method.
 
 ### Providing a custom HttpClient
 
-Support by default.
-
 **Unlike Refit** 
-- HttpClientFiller has no custom setting class like ~~`RefitSettings`~~, so you are free to provider your own custom `HttpClient`. All features are working as the same.
+- HttpClientFiller has no custom setting class like ~~`RefitSettings`~~, so you are free to config the `HttpClient`. All features are working as the same.
 
 ### Intercept HttpRequestMessage
 
@@ -1273,11 +1280,12 @@ Then register in DI
 
 ```csharp
 
-builder.Services.AddHttpClient<IMiniBankApi, ExceptionHandlerMiniBankApi>(client =>
+builder.Services.AddHttpClient<IMiniBankApi, IMiniBankApi>(client =>
 {
-    client.BaseAddress = new Uri("https://api.github.com");
+    client.BaseAddress = new Uri("https://api.minibank.com");
     
-    return new ExceptionHandlerMiniBankApi(
+    return 
+    new ExceptionHandlerMiniBankApi(
         new TokenMiniBankApi(
             new MiniBankApi(client), new TokenService()
         )
