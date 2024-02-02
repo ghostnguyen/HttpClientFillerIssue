@@ -1,12 +1,12 @@
-## HttpClientFiller - Refit like but supports native ahead-of-time (AOT) compilation.
+﻿## HttpClientFiller - Refit like but supports native ahead-of-time (AOT) compilation.
 
 The HttpClientFiller usage is mostly identical from Refit. 
 
 There are a few different to promote easier to use (less junk code) but highly customizable on your need.
 
-**Unlike Refit** will mark for the different.
+**Unlike Refit** keyword will mark for the different.
 
-Requirements and Limitation:
+Requirements and Limitations:
 - .NET 6 (C# 12) or above 
 - No support XML Serialization, Newtonsoft.Json
 - Only support System.Text.Json.JsonSerializer
@@ -27,8 +27,8 @@ public partial class GitHubApi : IGitHubApi
 ```
 
 **Unlike Refit**
-- You must declare addtion `partial class` and [HttpClient] attribute to generate explicit implementation (no reflection). 
-- The method in interface must return `Task` or `Task<T>`, otherwise you have to manually provide implemetation.
+- You must declare addtion `partial class` and **[HttpClient]** attribute to generate explicit implementation (no reflection). 
+- The method in interface must return `Task`, `Task<T>`, `Task<ApiResponse<T>>` or `Task<HttpResponseMessage>` otherwise you have to provide manually implemetation.
 
 ```csharp
 // Register to DI
@@ -45,6 +45,12 @@ public AbcController(IGitHubApi gitHubApi)
 - Since explicit implementation, it supports registering via HttpClientFactory by default. No need for additional helper method.
 
 ## Changelog
+
+### [0.1.4] - 2024-02-02
+
+#### Add
+- Intercept HttpResponseMessage
+
 
 ### [0.1.3] - 2024-01-29
 
@@ -77,9 +83,9 @@ public AbcController(IGitHubApi gitHubApi)
 * [Unescape Querystring parameters](#unescape-querystring-parameters)
 * [Body content](#body-content)
   * [Buffering and the Content-Length header](#buffering-and-the-content-length-header)
-  * [HttpCompleteOption] (#http-complete-option)
+  * [HttpCompleteOption](#httpcompleteoption)
   * [JSON content](#json-content)
-  * [JSON source generator]
+  * [JSON source generator](#json-source-generator)
   * [XML Content](#xml-content)
   * [Form posts](#form-posts)
 * [Setting request headers](#setting-request-headers)
@@ -100,12 +106,13 @@ public AbcController(IGitHubApi gitHubApi)
 * [Default Interface Methods](#default-interface-methods)
 * [Using HttpClientFactory](#using-httpclientfactory)
 * [Providing a custom HttpClient](#providing-a-custom-httpclient)
-* [Intercept HttpRequestMessage]
+* [Intercept HttpRequestMessage](#intercept-httprequestmessage)
+* [Intercept HttpResponseMessage](#intercept-httpResponseMessage)
 * [Handling exceptions](#handling-exceptions)
   * [Providing a custom ExceptionFactory](#providing-a-custom-exceptionfactory)
   * [ApiException deconstruction with Serilog](#apiexception-deconstruction-with-serilog)
-* [Aspect Oriented Programming to your interface]
-* [Issue Report]
+* [Aspect Oriented Programming to your interface](#aspect-oriented-programming-to-your-interface)
+* [Issue Report](#issue-report)
 
 ### Where does this work?
 
@@ -115,7 +122,7 @@ public AbcController(IGitHubApi gitHubApi)
 
 - Get, Post, Put, Delete, Patch and Head.
 - The string param is used as relative URL.
-- The string param will be generated as [string interpolation](https://learn.microsoft.com/en-us/dotnet/csharp/tutorials/string-interpolation) and [raw string literal](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/tokens/raw-string). It is more easier to use (less library custom Attributes) and maximum flexibility (write your own format)
+- The string param will be generated as [string interpolation](https://learn.microsoft.com/en-us/dotnet/csharp/tutorials/string-interpolation) and [raw string literal](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/tokens/raw-string) ($""" """). It is more easier to use (less custom Attributes) and maximum flexibility (write your own)
 
 Static url:
 
@@ -164,7 +171,7 @@ class UserGroupRequest{
 - But you can write your own. (See Dynamic Querystring Parameters)
 
 **Unlike Refit**
-- No-need encoded using a double-asterisk (\*\*) for uri path.
+- No-need a double-asterisk (\*\*) encoded for uri path.
 
 ```csharp
 [Get("/search/{page}")]
@@ -174,7 +181,7 @@ Search("admin/products");
 >>> "/search/admin/products"
 ```
 
-**Note**
+**Note:**
 
 For [Head] attribute, the return type of method must be `Task<HttpResponseMessage>` because http verb head request should return no body response.
 
@@ -309,7 +316,7 @@ type of the parameter:
 
 #### Buffering and the `Content-Length` header
 
-Behind the scene is `HttpClient` send http request which is streaming without buffering by default.
+By default, `HttpClient` sends http request which is streaming without buffering by default.
 
 **Unlike Refit**
 - HttpClientFiller don't control streaming buffer behavior. But you can control buffer/no buffer in the Stream object which is passed to method. 
@@ -694,6 +701,9 @@ Headers defined on an interface or method can be removed by redefining
 a static header without a value (i.e. without `: <value>`) or passing `null` for
 a dynamic header. _Empty strings will be included as empty headers._
 
+**Note:**
+- HttpClient may throw exception and/or NOT send the empty header.
+
 ```csharp
 [Headers("X-Emoji: :rocket:")]
 public interface IGitHubApi
@@ -832,7 +842,7 @@ Task<HttpResponseMessage> GetUser(string user);
 
 There is also a generic wrapper class called `ApiResponse<T>` that can be used as a return type. Using this class as a return type allows you to retrieve not just the content as an object `T`, but also any metadata associated with the request/response `HttpResponseMessage`.
 
-This includes information such as response headers, the http status code and reason phrase (e.g. 404 Not Found), the response version, the original request message that was sent and in the case of an error, an `ApiException` object containing details of the error. Following are some examples of how you can retrieve the response metadata.
+This includes information such as response headers, the http status code and reason phrase (e.g. 404 Not Found), the response version, the original request message that was sent and in the case of an error, an `HttpResponseMessage` object containing details of the error. Following are some examples of how you can retrieve the response metadata.
 
 
 **Unlike Refit**
@@ -939,6 +949,7 @@ var api = new ReallyExcitingCrudApiForUser((new HttpClient()
 
 When multiple services that need to be kept separate share a number of APIs, it is possible to leverage interface inheritance to avoid having to define the same Refit methods multiple times in different services:
 
+
 ```csharp
 public interface IBaseService
 {
@@ -959,9 +970,9 @@ public interface IDerivedServiceB : IBaseService
 }
 ```
 
-In this example, the `IDerivedServiceA` interface will expose both the `GetResource` and `DeleteResource` APIs, while `IDerivedServiceB` will expose `GetResource` and `AddResource`.
+**Notes: HttpClientFiller don't support dupicated methods in interface inheritance.**
 
-**Notes:** HttpClientFiller don't support dupicated methods in interface inheritance.
+In this example, the `IDerivedServiceA` interface will expose both the `GetResource` and `DeleteResource` APIs, while `IDerivedServiceB` will expose `GetResource` and `AddResource`.
 
 This will cause compile error.
 
@@ -1126,12 +1137,43 @@ public partial class GitHubApi : IGitHubApi
 }
 ```
 
+### Intercept HttpResponseMessage
+
+We can inspect the `HttpResponseMessage` before it deserializes and returns to caller method.
+
+Sync, async method (with/without CancellationToken) are also supported.
+
+Add one of three methods below in your partial class.
+
+```csharp
+public interface IGitHubApi
+{
+    [Get("/users/{user}")]
+    Task<User> GetUser(string user);
+}
+
+[HttpClient]
+public partial class GitHubApi : IGitHubApi
+{
+    void HandleHttpResponseMessage(HttpResponseMessage response){
+        // Inspect the response and throw your own custom exception then try catch 
+        // in caller or in AOP (see `Aspect Oriented Programming to your interface`)
+    }
+
+    async Task HandleHttpResponseMessageAsync(HttpResponseMessage response){
+    }
+
+    async Task HandleHttpResponseMessageAsync(HttpResponseMessage response, CancellationToken ct){
+    }
+}
+```
+
 ### Handling exceptions
 
 **Unlike Refit**:
-- HttpClientFiller support return type for `Task`, `Task<T>`, ~~`Task<IApiResponse>`, `Task<IApiResponse<T>>`~~, or `Task<ApiResponse<T>>`. 
-- No custom for any type Exception.
-- The exception will be throw as is from .NET libraries (HttpClient, System.Text.Json.JsonSerializer, etc..)
+- HttpClientFiller support return type for `Task`, `Task<T>`, ~~`Task<IApiResponse>`, `Task<IApiResponse<T>>`~~, `Task<HttpResponseMessage>` or `Task<ApiResponse<T>>`. 
+- No any custom type Exception.
+- The exception will be throwed as is from .NET libraries (HttpClient, System.Text.Json.JsonSerializer, etc..)
 
 If your return is `Task<ApiResponse<T>>` then:
 ```csharp
@@ -1165,7 +1207,7 @@ catch (HttpRequestException exception)
 
 **Unlike Refit**
 - HttpClientFiller has no custom ExceptionFactory.
-- For more advance option, see `Aspect Oriented Programming to your interface`
+- But we have more advances (AOT support, strongly typed) option, see `Aspect Oriented Programming to your interface`
 
 #### `ApiException` deconstruction with Serilog
 
