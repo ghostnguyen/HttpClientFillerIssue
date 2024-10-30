@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HttpClientFillerAttribute",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HttpClientFillerCore", "HttpClientFillerCore\HttpClientFillerCore.csproj", "{03D10689-8C06-4292-AB48-3AD641B6816B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestHttpClientFillerAot", "TestHttpClientFillerAot\TestHttpClientFillerAot.csproj", "{ECD5CE15-665B-41F6-AEDB-546DB47DD38F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{03D10689-8C06-4292-AB48-3AD641B6816B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{03D10689-8C06-4292-AB48-3AD641B6816B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{03D10689-8C06-4292-AB48-3AD641B6816B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECD5CE15-665B-41F6-AEDB-546DB47DD38F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECD5CE15-665B-41F6-AEDB-546DB47DD38F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECD5CE15-665B-41F6-AEDB-546DB47DD38F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECD5CE15-665B-41F6-AEDB-546DB47DD38F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
